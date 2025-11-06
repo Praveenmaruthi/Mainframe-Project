@@ -1,0 +1,278 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID EDLNCA05.
+      ******************************************************************
+      *-------------->  EDUCATION LOAN PROCESSING SYSTEM  <-------------
+      * ------------------->   BRIEF DESCRIPTION     <------------------
+      ******************************************************************
+      *AUTHOR                          : PRAVEEN MARUTHI, RICHA PATEL, SHAIK GOUSE,
+      *                                            SASIKIRAN THONDEPU, DINDU BHAVANA
+      *DATE-WRITTEN             : 06-04-2024
+      *PROGRAM-OBJECTIVE : MAKING REPORT FOR RECORDS WITH LOAN TENURE
+      *                                             TYPE AS SHORT
+      *INPUT FILE                      : SEQUENTIAL FILE
+      *OUTPT FILE                     : SEQUENTIAL FILE
+      ******************************************************************
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+      * -----> INPUT FILE WHICH CONTAINS ALL ACTIVE LOAN DETAILS <------
+           SELECT INP-KSDS ASSIGN TO INPKSDS
+           ORGANIZATION IS INDEXED
+           ACCESS MODE IS SEQUENTIAL
+           RECORD KEY IS APPLICANT-ID
+           FILE STATUS IS WS-INPPS.
+      *----------> OUTPUT FILE WHICH IS IN REPORT FORMAT <-------------
+           SELECT OUT-PS ASSIGN TO REPORTPS
+           ORGANIZATION IS SEQUENTIAL
+           ACCESS IS SEQUENTIAL
+           FILE STATUS IS WS-OUTPS.
+      ******************************************************************
+      *                     DATA DIVISION
+      ******************************************************************
+       DATA DIVISION.
+       FILE SECTION.
+      *-------------------> INPUT FILE DESCRIPTION <------------------*
+       FD INP-KSDS.
+       01 INP-KSDS-REC.
+          02 APPLICANT-ID                  PIC 9(10).
+          02 FILLER                        PIC X(01).
+          02 LOAN-ID                       PIC X(2).
+          02 FILLER                        PIC X(01).
+          02 LOAN-TENURE                   PIC X(2).
+          02 FILLER                        PIC X(01).
+          02 LOAN-TENURE-TYPE              PIC X(5).
+          02 FILLER                        PIC X(58).
+       FD OUT-PS.
+       01 REPO-REC PIC X(80).
+      * -------------->  WORKING STORAGE SECTION    <------------------
+       WORKING-STORAGE SECTION.
+       01 ROW1                            PIC X(80) VALUE ALL SPACES.
+       01 WS-OUT-REC.
+          02 WS-APPLICANT-ID               PIC 9(10).
+          02 FILLER                        PIC X(01).
+          02 WS-LOAN-ID                    PIC X(2).
+          02 FILLER                        PIC X(01).
+          02 WS-LOAN-TENURE                PIC X(2).
+          02 FILLER                        PIC X(01).
+          02 WS-LOAN-TENURE-TYPE           PIC X(5).
+       01 WS-DATE.
+          02 WS-YY                         PIC 9(2).
+          02 WS-MM                         PIC 9(2).
+          02 WS-DD                         PIC 9(2).
+       01 WS-TIME.
+          02 WS-HH                         PIC 9(2).
+          02 WS-MM1                        PIC 9(2).
+          02 WS-SS                         PIC 9(2).
+       01 WS-PRINT-TIME.
+          02 WS-PRINT-HH                   PIC 9(2).
+          02 FILLER                        PIC X(1) VALUE ':'.
+          02 WS-PRINT-MM1                  PIC 9(2).
+          02 FILLER                        PIC X(1) VALUE ':'.
+          02 WS-PRINT-SS                   PIC 9(2).
+       01 TITLE-1.
+          02 FILLER                    PIC X(23) VALUE SPACES.
+          02 FILLER        PIC X(20) VALUE 'LOAN DETAIL REPORT'.
+          02 FILLER                    PIC X(37).
+       01 TITLE-2.
+          02 FILLER                    PIC X(5) VALUE 'DATE:'.
+          02 TITLE-DATE                PIC X(8).
+          02 FILLER                    PIC X(44).
+          02 FILLER                    PIC X(5) VALUE 'PAGE:'.
+          02 PAGE-NO                   PIC 9(1).
+          02 FILLER                    PIC X(11) VALUE SPACES.
+       01 TITLE-3.
+          02 FILLER                    PIC X(5) VALUE 'TIME:'.
+          02 TITLE-TIME                PIC X(8).
+          02 FILLER                    PIC X(44).
+          02 FILLER                    PIC X(14) VALUE 'REPORT ID:1006'.
+          02 FILLER                    PIC X(9) VALUE SPACES.
+       01 TITLE-4.
+          02 FILLER                    PIC X(58) VALUE SPACES.
+          02 FILLER                    PIC X(5) VALUE 'PAGE:'.
+          02 PAGE-NO1                  PIC 9(1).
+          02 FILLER                    PIC X(10) VALUE SPACES.
+       01 TITLE-5.
+          02 FILLER                    PIC X(58) VALUE SPACES.
+          02 FILLER                    PIC X(14) VALUE 'REPORT ID:1006'.
+          02 FILLER                    PIC X(8) VALUE SPACES.
+       01 HEADER-1.
+          02 H-APPL-ID                 PIC X(12) VALUE 'APPLICANT ID'.
+          02 FILLER                    PIC X(5) VALUE SPACES.
+          02 H-LN-ID                   PIC X(7) VALUE 'LOAN ID'.
+          02 FILLER                    PIC X(5) VALUE SPACES.
+          02 H-LN-TEN                  PIC X(11) VALUE 'LOAN TENURE'.
+          02 FILLER                    PIC X(5) VALUE SPACES.
+          02 H-LN-TEN-TYP           PIC X(16) VALUE 'LOAN TENURE TYPE'.
+          02 FILLER                    PIC X(19).
+       01 HEADER-2.
+           02 H-APPL-ID                PIC X(12) VALUE '------------'.
+           02 FILLER                   PIC X(5) VALUE SPACES.
+           02 H-LN-ID                  PIC X(7) VALUE '-------'.
+           02 FILLER                   PIC X(5) VALUE SPACES.
+           02 H-LN-TEN                 PIC X(11) VALUE '-----------'.
+           02 FILLER                   PIC X(5) VALUE SPACES.
+           02 H-LN-TEN-TYP       PIC X(16) VALUE '----------------'.
+           02 FILLER                   PIC X(19).
+       01 TRAILER-1.
+          02 FILLER                    PIC X(15) VALUE SPACES.
+          02 FILLER                    PIC X(13) VALUE '------------'.
+          02 FILLER                    PIC X(11) VALUE 'END OF PAGE'.
+          02 FILLER                    PIC X(13) VALUE '------------'.
+       01 TRAILER-2.
+          02 FILLER                    PIC X(14) VALUE SPACES.
+          02 FILLER                    PIC X(13) VALUE '*************'.
+          02 FILLER                    PIC X(13) VALUE 'END OF REPORT'.
+          02 FILLER                    PIC X(13) VALUE '*************'.
+       01 DETAIL-LINE.
+           02 D-APPL-ID                PIC X(12) VALUE SPACES.
+           02 FILLER                   PIC X(5) VALUE SPACES.
+           02 D-LN-ID                  PIC X(7) VALUE SPACES.
+           02 FILLER                   PIC X(5) VALUE SPACES.
+           02 D-LN-TEN                 PIC X(11) VALUE SPACES.
+           02 FILLER                   PIC X(5) VALUE SPACES.
+           02 D-LN-TEN-TYP             PIC X(16) VALUE SPACES.
+       01 WS-PAGE-NO                   PIC 9(1) VALUE ZEROS.
+       01 PAGE-LN-CNTR                 PIC 9(2) VALUE ZEROS.
+       01 WS-COUNTER                   PIC 99.
+       01 COUNTERS.
+          02 RECS-READ                 PIC 9(3) VALUE 0.
+       01 WS-INPPS                     PIC 99 VALUE ZEROS.
+       01 WS-OUTPS                     PIC 99 VALUE ZEROS.
+      ******************************************************************
+      *----------------->    PROCEDURE DIVISION    <-------------------*
+      ******************************************************************
+       PROCEDURE DIVISION.
+       0000-MAIN-PARA.
+           PERFORM 1000-INIT-PARA    THRU 1000-INIT-EXIT.
+           PERFORM 3000-PROCESS-PARA THRU 3000-PROCESS-EXIT.
+           PERFORM 9000-TERM-PARA    THRU 9000-TERM-EXIT.
+           STOP RUN.
+       1000-INIT-PARA.
+           PERFORM 2000-OPEN-PARA    THRU 2000-OPEN-EXIT.
+           MOVE FUNCTION CURRENT-DATE TO TITLE-DATE.
+           MOVE FUNCTION CURRENT-DATE(9:2)  TO TITLE-TIME(1:2).
+           MOVE ":" TO TITLE-TIME(3:1).
+           MOVE FUNCTION CURRENT-DATE(11:2) TO TITLE-TIME(4:2).
+           MOVE ":" TO TITLE-TIME(6:1).
+           MOVE FUNCTION CURRENT-DATE(13:2) TO TITLE-TIME(7:2).
+           MOVE 1 TO WS-PAGE-NO.
+           MOVE WS-PAGE-NO TO PAGE-NO.
+           MOVE WS-PAGE-NO TO PAGE-NO1.
+           WRITE REPO-REC  FROM TITLE-1.
+           WRITE REPO-REC  FROM ROW1.
+           WRITE REPO-REC  FROM TITLE-2.
+           WRITE REPO-REC  FROM TITLE-3.
+           WRITE REPO-REC  FROM ROW1.
+           WRITE REPO-REC  FROM HEADER-1.
+           WRITE REPO-REC  FROM HEADER-2.
+       1000-INIT-EXIT.
+           EXIT.
+      ******************************************************************
+      *------------> OPEN-PARA TO OPEN THE FILES       <---------------
+      ******************************************************************
+       2000-OPEN-PARA.
+           OPEN INPUT INP-KSDS
+           IF WS-INPPS = 00
+              CONTINUE
+           ELSE
+              DISPLAY 'ERROR IN OPENING' WS-INPPS
+           END-IF.
+      *
+           OPEN EXTEND OUT-PS
+           IF WS-OUTPS = 00
+              CONTINUE
+           ELSE
+              DISPLAY 'ERROR IN OPENING' WS-OUTPS
+           END-IF.
+       2000-OPEN-EXIT.
+           EXIT.
+      ******************************************************************
+      *--------------->       PROCESS PARA              <---------------
+      ******************************************************************
+       3000-PROCESS-PARA.
+            PERFORM 3100-READ-PARA THRU 3100-READ-EXIT UNTIL
+            WS-INPPS = 10.
+            PERFORM 4000-TRAILER-PARA THRU 4000-TRAILER-EXIT.
+       3000-PROCESS-EXIT.
+           EXIT.
+      ******************************************************************
+      *--------------->         READ PARA               <---------------
+      ******************************************************************
+       3100-READ-PARA.
+           READ INP-KSDS INTO WS-OUT-REC
+           EVALUATE TRUE
+           WHEN WS-INPPS = 00
+             PERFORM 3200-VALID-PARA THRU 3200-VALID-EXIT
+             ADD 1 TO WS-COUNTER
+             ADD 1 TO RECS-READ
+           WHEN WS-INPPS = 10
+             EVALUATE TRUE
+             WHEN WS-COUNTER = 00
+                DISPLAY 'FILE IS EMPTY'
+             WHEN OTHER
+                DISPLAY 'ALL RECORDS ARE PROCESSED'
+                DISPLAY 'NO-OF RECORDS: ' WS-COUNTER
+             END-EVALUATE
+           WHEN OTHER
+             DISPLAY 'FILE REACHE DAT BOTTOM:' WS-INPPS
+             DISPLAY 'ERROR IN FILE OPENING!!!'
+           END-EVALUATE
+           .
+       3100-READ-EXIT.
+           EXIT.
+      ******************************************************************
+      *----------> FETCHING ONLY SHORT RECORDS             <------------
+      ******************************************************************
+       3200-VALID-PARA.
+           IF WS-LOAN-TENURE-TYPE = 'SHORT'
+              DISPLAY 'FOUND:-' APPLICANT-ID
+              PERFORM 3300-WRITE-PARA THRU 3300-WRITE-EXIT
+           ELSE
+              DISPLAY 'NO RECORDS SHORT LOAN TENURE TYPE'
+           END-IF.
+       3200-VALID-EXIT.
+           EXIT.
+      ******************************************************************
+      *-------------> WRITING REPORT 10 RECORDS PER PAGE <-------------
+      ******************************************************************
+       3300-WRITE-PARA.
+           IF WS-INPPS   IS NOT EQUAL TO 10
+             MOVE WS-APPLICANT-ID     TO D-APPL-ID
+             MOVE WS-LOAN-ID          TO D-LN-ID
+             MOVE WS-LOAN-TENURE      TO D-LN-TEN
+             MOVE WS-LOAN-TENURE-TYPE TO D-LN-TEN-TYP
+             WRITE REPO-REC           FROM DETAIL-LINE
+             ADD 1 TO PAGE-LN-CNTR
+             IF PAGE-LN-CNTR = 10
+                MOVE 0 TO PAGE-LN-CNTR
+                ADD 1  TO WS-PAGE-NO
+                MOVE WS-PAGE-NO TO PAGE-NO
+                MOVE WS-PAGE-NO TO PAGE-NO1
+                WRITE REPO-REC  FROM ROW1
+                WRITE REPO-REC  FROM ROW1
+                WRITE REPO-REC  FROM TRAILER-1
+                WRITE REPO-REC  FROM TITLE-4
+                WRITE REPO-REC  FROM TITLE-5
+                WRITE REPO-REC  FROM ROW1
+                WRITE REPO-REC  FROM HEADER-1
+                WRITE REPO-REC  FROM HEADER-2
+             END-IF
+           END-IF.
+       3300-WRITE-EXIT.
+           EXIT.
+      *****************************************************************
+      *-------> WRITING EOF TRAILER IS., 'END OF REPORT'  <---------
+      *****************************************************************
+       4000-TRAILER-PARA.
+           WRITE REPO-REC FROM ROW1
+           WRITE REPO-REC FROM TRAILER-1.
+           WRITE REPO-REC FROM ROW1.
+           WRITE REPO-REC FROM TRAILER-2.
+       4000-TRAILER-EXIT.
+           EXIT.
+       9000-TERM-PARA.
+           CLOSE INP-KSDS
+                 OUT-PS.
+       9000-TERM-EXIT.
+           EXIT.
+

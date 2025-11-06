@@ -1,0 +1,19 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. EDLNCA03.
+       AUTHOR. PRAVEEN.
+       DATA DIVISION.
+       LINKAGE SECTION.
+       77 LK-LOAN-TENURE        PIC  9(2).
+       77 LK-FI                 PIC  9(2)V9.
+      ******************************************************************
+      *----------------->    PROCEDURE DIVISION <--------------------
+      ******************************************************************
+       PROCEDURE DIVISION USING LK-LOAN-TENURE LK-FI.
+       0001-SUBPGM-PARA.
+           IF LK-LOAN-TENURE > 10
+               COMPUTE LK-FI = LK-FI - 0.5
+           ELSE
+               CONTINUE
+           END-IF.
+       END PROGRAM EDLNCA03.
+

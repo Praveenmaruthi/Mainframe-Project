@@ -1,0 +1,157 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. EDLNCA04.
+      ******************************************************************
+      *-------------->  EDUCATION LOAN PROCESSING SYSTEM  <-------------
+      * ------------------->   BRIEF DESCRIPTION     <------------------
+      ******************************************************************
+      *AUTHOR                           : PRAVEEN MARUTHI, RICHA PATEL, SHAIK GOUSE,
+      *                                              SASIKIRAN THONDEPU, DINDU BHAVANA
+      *DATE-WRITTEN              : 06-04-2024
+      *PROGRAM-OBJECTIVE  : FETCHING ALL ACTIVE LOAN RECORDS FROM LOAN
+      *                                               DATABASE AND LOADING INTO VSAM KSDS FILE
+      *INPUT FILE                       : DATABASE
+      *OUTPT FILE                      : SEQUENTIAL FILE
+      ******************************************************************
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+      * -----> OUPUT KSDS WHICH CONTAINS ALL ACTIVE LOANS <------------
+                  SELECT OUT-KSDS ASSIGN TO MALNKSDS
+                  ORGANIZATION IS INDEXED
+                  ACCESS MODE IS RANDOM
+                  RECORD KEY IS APPLICANT-ID
+                  FILE STATUS IS WS-FST-KSDS.
+       DATA DIVISION.
+       FILE SECTION.
+      ******************************************************************
+      *--------------->    KSDS FILE DESCRIPTION    <-------------------
+      ******************************************************************
+       FD OUT-KSDS.
+       01 OUT-KSDS-REC.
+          05 APPLICANT-ID                     PIC 9(10).
+          05 FILLER                           PIC X.
+          05 LOAN-ID                          PIC 9(2).
+          05 FILLER                           PIC X.
+          05 LOAN-TENURE                      PIC 9(2).
+          05 FILLER                           PIC X.
+          05 LOAN-TENURE-TYPE                 PIC X(5).
+          05 FILLER                           PIC X(58).
+      ******************************************************************
+      * ------------->     WORKING STORAGE SECTION <----------------*
+      ******************************************************************
+       WORKING-STORAGE SECTION.
+      * -------------->  FILE STATUS VARIABLES   <----------------------
+       01 WS-FST-KSDS                         PIC 9(02).
+       01 WS-SQLCODE                          PIC ZZ9-.
+       01 WS-LT                               PIC 99.
+      ******************************************************************
+      *------------------
+               EXEC SQL INCLUDE SQLCA END-EXEC.
+               EXEC SQL INCLUDE LNDB2 END-EXEC.
+      *****************************************************************
+      * ---------------->   CURSOR DECLARATION   <-------------------*
+      *****************************************************************
+               EXEC SQL
+                 DECLARE CUR CURSOR
+                 FOR SELECT L_APPLICANT_ID,
+                            LOAN_ID,
+                            LOAN_TENURE,
+                            LOAN_INDICATOR
+                     FROM LOAN_DB2
+                     WHERE LOAN_INDICATOR = 'OPEN'
+               END-EXEC.
+      *****************************************************************
+      * ---------------->    PROCEDURE DIVISION   <-------------------*
+      *****************************************************************
+       PROCEDURE DIVISION.
+       000-MAIN-PARA.
+             PERFORM 1000-INIT-PARA  THRU 1000-INIT-PARA-EXIT.
+             PERFORM 2000-PROCESS-PARA THRU 2000-PROCESS-PARA-EXIT.
+             PERFORM 5000-TERM-PARA THRU 5000-TERM-PARA-EXIT.
+             STOP RUN.
+       1000-INIT-PARA.
+             PERFORM 1100-OPEN-PARA THRU 1100-OPEN-PARA-EXIT.
+       1000-INIT-PARA-EXIT.
+             EXIT.
+      *-------------> 1100-OPEN-PARA TO OPEN FILES  <-----------------*
+       1100-OPEN-PARA.
+      *------------------> OPENING CURSOR <-----------------------------
+              EXEC SQL
+                 OPEN CUR
+              END-EXEC.
+      *
+              OPEN OUTPUT OUT-KSDS
+              IF WS-FST-KSDS = 00
+                 DISPLAY 'KSDS FILE OPENED'
+              ELSE
+                DISPLAY 'KSDS FILE NOT OPENED-' WS-FST-KSDS
+              END-IF.
+      *
+       1100-OPEN-PARA-EXIT.
+             EXIT.
+      *-----> 2000-PROCESS-PARA TO PERFORM READ AND CLOSE PARA <-------*
+       2000-PROCESS-PARA.
+             PERFORM 3000-FETCH-PARA THRU
+             3000-FETCH-PARA-EXIT UNTIL SQLCODE = 100.
+       2000-PROCESS-PARA-EXIT. EXIT.
+      ******************************************************************
+      *------> THIS PARA FETCHES ONLY ACTIVE LOANS FROM LOAN DB  <-----*
+      ******************************************************************
+       3000-FETCH-PARA.
+                   EXEC SQL
+                    FETCH CUR INTO
+                         :HV-L-APPLICANT-ID,
+                         :HV-LOAN-ID,
+                         :HV-LOAN-TENURE,
+                         :HV-LOAN-INDICATOR
+                   END-EXEC.
+                   IF SQLCODE = 0
+                     PERFORM 3100-KSDS-PARA THRU 3100-KSDS-PARA-EXIT
+                   ELSE
+                     MOVE SQLCODE TO WS-SQLCODE
+                     DISPLAY'ERROR:-' WS-SQLCODE
+                   END-IF.
+       3000-FETCH-PARA-EXIT.
+              EXIT.
+      ******************************************************************
+      *----------> MOVING LOAN TENURE TYPE BASED ON LOAN TENURE <-------
+      ******************************************************************
+       3100-KSDS-PARA.
+                      MOVE SPACES TO OUT-KSDS-REC
+                      MOVE HV-LOAN-TENURE TO WS-LT
+                      EVALUATE TRUE
+                      WHEN WS-LT <= 5
+                           MOVE 'SHORT' TO LOAN-TENURE-TYPE
+                           PERFORM 4000-WRITE-KSDS-PARA THRU
+                           4000-WRITE-KSDS-PARA-EXIT
+                      WHEN OTHER
+                           MOVE 'LONG' TO LOAN-TENURE-TYPE
+                           PERFORM 4000-WRITE-KSDS-PARA THRU
+                           4000-WRITE-KSDS-PARA
+                      END-EVALUATE.
+       3100-KSDS-PARA-EXIT.
+             EXIT.
+      ******************************************************************
+      *---------> WRITING THE RECORDS IN KSDS VSAM FILE       <---------
+      ******************************************************************
+       4000-WRITE-KSDS-PARA.
+             MOVE HV-L-APPLICANT-ID TO APPLICANT-ID.
+             MOVE HV-LOAN-ID        TO LOAN-ID.
+             MOVE HV-LOAN-TENURE    TO LOAN-TENURE.
+             EVALUATE TRUE
+             WHEN WS-FST-KSDS = 00
+                 WRITE OUT-KSDS-REC
+                 DISPLAY 'FILE WRITTEN:-'APPLICANT-ID
+             WHEN OTHER
+                 DISPLAY 'ERROR IN FILE' WS-FST-KSDS
+             END-EVALUATE.
+       4000-WRITE-KSDS-PARA-EXIT.
+            EXIT.
+       5000-TERM-PARA.
+            CLOSE OUT-KSDS.
+                  EXEC SQL
+                    CLOSE CUR
+                  END-EXEC.
+       5000-TERM-PARA-EXIT.
+            EXIT.
+

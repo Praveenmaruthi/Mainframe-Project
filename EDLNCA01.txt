@@ -1,0 +1,289 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. EDLNCA01.
+      ******************************************************************
+      *-------------->  EDUCATION LOAN PROCESSING SYSTEM  <-------------
+      * ------------------->   BRIEF DESCRIPTION     <------------------
+      ******************************************************************
+      *AUTHOR                          : PRAVEEN MARUTHI, RICHA PATEL, SHAIK GOUSE,
+      *                                             SASIKIRAN THONDEPU, DINDU BHAVANA
+      *DATE-WRITTEN             : 06-04-2024
+      *PROGRAM-OBJECTIVE : VALIDATING INPUT RECORDS FROM PS AND SENDING
+      *                                             ERROR RECORDS TO ERROR FILE, VALID RECORDS TO
+      *                                             TO VALID FILE.
+      *INPUT FILE                      : SEQUENTIAL FILE
+      *OUTPT FILE                     : SEQUENTIAL FILE
+      ******************************************************************
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+      * -----> INPUT FILE WHICH CONTAINS EDUCATIONAL LOAN DETAILS <-----
+                  SELECT INP-PS ASSIGN TO LOANDET
+                  ORGANIZATION IS SEQUENTIAL
+                  ACCESS IS SEQUENTIAL
+                  FILE STATUS IS WS-FST-INPPS.
+      * -----> ERROR FILE WHICH CONTAINS IMPROPER RECORDS <-------------
+                  SELECT ERR-PS ASSIGN TO ERRORPS
+                  ORGANIZATION IS SEQUENTIAL
+                  ACCESS IS SEQUENTIAL
+                  FILE STATUS IS WS-FST-ERRPS.
+      * ------> OUTPUT FILE WHICH CONTAINS VALID RECORDS <-------------
+                  SELECT OUT-PS ASSIGN TO VALRECPS
+                  ORGANIZATION IS SEQUENTIAL
+                  ACCESS IS SEQUENTIAL
+                  FILE STATUS IS WS-FST-OUTPS.
+       DATA DIVISION.
+       FILE SECTION.
+      ******************************************************************
+      *------------------>   INPUT FILE DESCRIPTION   <-----------------
+      ******************************************************************
+       FD INP-PS.
+       01 INP-PS-REC.
+          05 INP-APPLICANT-ID                 PIC 9(10).
+          05 FILLER                           PIC X.
+          05 INP-APPLICANT-NAME               PIC X(32).
+          05 FILLER                           PIC X.
+          05 INP-DOOR-NO                      PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-STREET                       PIC X(20).
+          05 FILLER                           PIC X.
+          05 INP-CITY                         PIC X(20).
+          05 FILLER                           PIC X.
+          05 INP-STATE                        PIC X(20).
+          05 FILLER                           PIC X.
+          05 INP-PIN                          PIC 9(06).
+          05 FILLER                           PIC X.
+          05 INP-CELL-PHONE-NO                PIC 9(10).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-ID                      PIC 9(02).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-TYPE                    PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-APPROVED-LOAN-AMOUNT         PIC 9(08).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-APPROVAL-DATE           PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-EXPECTED-LOAN-CLOSURE-DATE   PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-TENURE                  PIC 9(02).
+          05 FILLER                           PIC X.
+          05 INP-FIXED-INTEREST-RATE          PIC 9(2).9.
+          05 FILLER                           PIC X.
+          05 INP-LOAN-INDICATOR               PIC X(5).
+          05 FILLER                           PIC X.
+          05 INP-REPAYMENT-DAY                PIC X(2).
+          05 FILLER                           PIC X.
+          05 INP-TOTAL-REPAYMENT-AMOUNT       PIC 9(10).
+          05 FILLER                           PIC X(42).
+      ******************************************************************
+      *----------------->  ERROR FILE DESCRIPTION  <--------------------
+      ******************************************************************
+       FD ERR-PS.
+       01 ERR-PS-REC.
+          05 ERR-APPLICANT-ID                 PIC X(10).
+          05 FILLER                           PIC X.
+          05 ERR-APPLICANT-NAME               PIC X(32).
+          05 FILLER                           PIC X.
+          05 ERR-DOOR-NO                      PIC X(10).
+          05 FILLER                           PIC X.
+          05 ERR-STREET                       PIC X(20).
+          05 FILLER                           PIC X.
+          05 ERR-CITY                         PIC X(20).
+          05 FILLER                           PIC X.
+          05 ERR-STATE                        PIC X(20).
+          05 FILLER                           PIC X.
+          05 ERR-PIN                          PIC 9(06).
+          05 FILLER                           PIC X.
+          05 ERR-CELL-PHONE-NO                PIC 9(10).
+          05 FILLER                           PIC X.
+          05 ERR-LOAN-ID                      PIC 9(02).
+          05 FILLER                           PIC X.
+          05 ERR-LOAN-TYPE                    PIC X(10).
+          05 FILLER                           PIC X.
+          05 ERR-APPROVED-LOAN-AMOUNT         PIC 9(08).
+          05 FILLER                           PIC X.
+          05 ERR-LOAN-APPROVAL-DATE           PIC X(10).
+          05 FILLER                           PIC X.
+          05 ERR-EXPECTED-LOAN-CLOSURE-DATE   PIC X(10).
+          05 FILLER                           PIC X.
+          05 ERR-LOAN-TENURE                  PIC 9(02).
+          05 FILLER                           PIC X.
+          05 ERR-FIXED-INTEREST-RATE          PIC 9(2).9.
+          05 FILLER                           PIC X.
+          05 ERR-LOAN-INDICATOR               PIC X(5).
+          05 FILLER                           PIC X.
+          05 ERR-REPAYMENT-DAY                PIC X(2).
+          05 FILLER                           PIC X.
+          05 ERR-TOTAL-REPAYMENT-AMOUNT       PIC 9(10).
+          05 FILLER                           PIC X(42).
+      ******************************************************************
+      *--------->    OUTPUT (VALREC)  FILE DESCRIPTION <------------
+      ******************************************************************
+       FD OUT-PS.
+       01 OUT-PS-REC.
+          05 OUT-APPLICANT-ID                 PIC X(10).
+          05 FILLER                           PIC X.
+          05 OUT-APPLICANT-NAME               PIC X(32).
+          05 FILLER                           PIC X.
+          05 OUT-DOOR-NO                      PIC X(10).
+          05 FILLER                           PIC X.
+          05 OUT-STREET                       PIC X(20).
+          05 FILLER                           PIC X.
+          05 OUT-CITY                         PIC X(20).
+          05 FILLER                           PIC X.
+          05 OUT-STATE                        PIC X(20).
+          05 FILLER                           PIC X.
+          05 OUT-PIN                          PIC 9(06).
+          05 FILLER                           PIC X.
+          05 OUT-CELL-PHONE-NO                PIC 9(10).
+          05 FILLER                           PIC X.
+          05 OUT-LOAN-ID                      PIC 9(02).
+          05 FILLER                           PIC X.
+          05 OUT-LOAN-TYPE                    PIC X(10).
+          05 FILLER                           PIC X.
+          05 OUT-APPROVED-LOAN-AMOUNT         PIC 9(08).
+          05 FILLER                           PIC X.
+          05 OUT-LOAN-APPROVAL-DATE           PIC X(10).
+          05 FILLER                           PIC X.
+          05 OUT-EXPECTED-LOAN-CLOSURE-DATE   PIC X(10).
+          05 FILLER                           PIC X.
+          05 OUT-LOAN-TENURE                  PIC 9(02).
+          05 FILLER                           PIC X.
+          05 OUT-FIXED-INTEREST-RATE          PIC 9(2).9.
+          05 FILLER                           PIC X.
+          05 OUT-LOAN-INDICATOR               PIC X(5).
+          05 FILLER                           PIC X.
+          05 OUT-REPAYMENT-DAY                PIC X(2).
+          05 FILLER                           PIC X.
+          05 OUT-TOTAL-REPAYMENT-AMOUNT       PIC 9(10).
+          05 FILLER                           PIC X(42).
+      ******************************************************************
+      * ------------->     WORKING STORAGE SECTION <----------------*
+      ******************************************************************
+       WORKING-STORAGE SECTION.
+      * -------------->  FILE STATUS VARIABLES   <----------------------
+       01 WS-FST-INPPS                        PIC 9(02).
+       01 WS-FST-ERRPS                        PIC 9(02).
+       01 WS-FST-OUTPS                        PIC 9(02).
+       01 WS-COUNTER                          PIC 99.
+      *****************************************************************
+      * ---------------->    PROCEDURE DIVISION   <-------------------*
+      *****************************************************************
+       PROCEDURE DIVISION.
+       000-MAIN-PARA.
+             PERFORM 1000-INIT-PARA  THRU 1000-INIT-PARA-EXIT.
+             PERFORM 2000-PROCESS-PARA THRU 2000-PROCESS-PARA-EXIT.
+             PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT.
+             STOP RUN.
+       1000-INIT-PARA.
+             PERFORM 1100-OPEN-PARA THRU 1100-OPEN-PARA-EXIT.
+       1000-INIT-PARA-EXIT.
+             EXIT.
+      *-------------> 1100-OPEN-PARA TO OPEN FILES  <-----------------*
+       1100-OPEN-PARA.
+             OPEN INPUT INP-PS
+             IF WS-FST-INPPS = 00
+                CONTINUE
+             ELSE
+                DISPLAY 'INPUT FILE NOT OPENED-' WS-FST-INPPS
+             END-IF.
+      *
+              OPEN OUTPUT ERR-PS
+              IF WS-FST-ERRPS = 00
+                 CONTINUE
+              ELSE
+                DISPLAY 'ERROR FILE NOT OPENED-' WS-FST-ERRPS
+              END-IF.
+      *
+              OPEN OUTPUT OUT-PS
+              IF WS-FST-OUTPS = 00
+                 CONTINUE
+              ELSE
+                DISPLAY 'OUTPS FILE NOT OPENED-' WS-FST-OUTPS
+              END-IF.
+       1100-OPEN-PARA-EXIT.
+             EXIT.
+      *-----> 2000-PROCESS-PARA TO PERFORM READ AND CLOSE PARA <-------*
+       2000-PROCESS-PARA.
+             PERFORM 2100-READ-PARA THRU 2100-READ-PARA-EXIT
+             UNTIL WS-FST-INPPS = 10.
+       2000-PROCESS-PARA-EXIT. EXIT.
+      *------> 2100-READ-PARA TO READ INPUT (SEQUENTIAL) FILE <--------*
+       2100-READ-PARA.
+              READ INP-PS
+              EVALUATE TRUE
+              WHEN WS-FST-INPPS = 00
+                 PERFORM 2200-VALID-PARA THRU 2200-VALID-PARA-EXIT
+                 ADD 1 TO WS-COUNTER
+              WHEN WS-FST-INPPS = 10
+                 EVALUATE TRUE
+                 WHEN WS-COUNTER = 00
+                      DISPLAY 'FILE IS EMPTY'
+                 WHEN OTHER
+                      DISPLAY 'ALL RECORDS PROCESSED'
+                      DISPLAY 'NO.OF RECORDS:' WS-COUNTER
+                 END-EVALUATE
+              WHEN OTHER
+                 DISPLAY 'ERROR IN FILE' WS-FST-INPPS
+              END-EVALUATE.
+       2100-READ-PARA-EXIT.
+              EXIT.
+      ******************************************************************
+      *VALIDATION: TO CHECK IF THE FILE CONSISTS ANY IMPROPER RECORDS
+      ******************************************************************
+       2200-VALID-PARA.
+              EVALUATE TRUE
+              WHEN INP-APPLICANT-ID   IS NOT NUMERIC OR
+                   INP-APPLICANT-NAME IS NUMERIC OR
+                   INP-APPLICANT-NAME EQUAL TO SPACES OR
+                   INP-CELL-PHONE-NO  IS NOT NUMERIC OR
+                   INP-LOAN-ID        IS NOT NUMERIC OR
+                   INP-LOAN-TYPE      IS NOT EQUAL TO 'EDUCATION' OR
+                   INP-LOAN-INDICATOR IS NOT EQUAL TO 'OPEN ' AND
+                   INP-LOAN-INDICATOR IS NOT EQUAL TO 'CLOSE'
+                   PERFORM 2300-WRITE-ERR-PARA THRU
+                   2300-WRITE-ERR-PARA-EXIT
+              WHEN OTHER
+                   PERFORM 2400-WRITE-OUTPS-PARA THRU
+                   2400-WRITE-OUTPS-PARA-EXIT.
+       2200-VALID-PARA-EXIT.
+               EXIT.
+      ******************************************************************
+      *------------------>   WRITING ERR-PS FILE   <-------------------*
+      ******************************************************************
+       2300-WRITE-ERR-PARA.
+                MOVE SPACES TO ERR-PS-REC
+                MOVE INP-PS-REC TO ERR-PS-REC
+                WRITE ERR-PS-REC
+                EVALUATE TRUE
+                WHEN WS-FST-ERRPS = 00
+                    DISPLAY 'ERROR FILE WRITTEN:-'INP-APPLICANT-ID
+                WHEN OTHER
+                    DISPLAY 'ERROR IN FILE' WS-FST-ERRPS
+                END-EVALUATE.
+       2300-WRITE-ERR-PARA-EXIT.
+              EXIT.
+      ******************************************************************
+      *------------------>   WRITING OUT-PS FILE   <-------------------*
+      ******************************************************************
+       2400-WRITE-OUTPS-PARA.
+                MOVE SPACES TO OUT-PS-REC
+                MOVE INP-PS-REC TO OUT-PS-REC
+                WRITE OUT-PS-REC
+                EVALUATE TRUE
+                WHEN WS-FST-OUTPS = 00
+                    DISPLAY 'VALID FILE WRITTEN:-'INP-APPLICANT-ID
+                WHEN OTHER
+                    DISPLAY 'ERROR IN FILE' WS-FST-OUTPS
+                END-EVALUATE.
+       2400-WRITE-OUTPS-PARA-EXIT.
+               EXIT.
+      ******************************************************************
+      *                 CLOSING FILES                              *****
+      ******************************************************************
+       9000-TERM-PARA.
+            CLOSE INP-PS
+                  ERR-PS
+                  OUT-PS.
+       9000-TERM-PARA-EXIT.
+            EXIT.
+

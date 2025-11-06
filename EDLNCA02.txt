@@ -1,0 +1,309 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. EDLNCA02.
+      ******************************************************************
+      *-------------->  EDUCATION LOAN PROCESSING SYSTEM  <-------------
+      * ------------------->   BRIEF DESCRIPTION     <------------------
+      ******************************************************************
+      *AUTHOR                          : PRAVEEN MARUTHI, RICHA PATEL, SHAIK GOUSE,
+      *                                             SASIKIRAN THONDEPU, DINDU BHAVANA
+      *DATE-WRITTEN             : 06-04-2024
+      *PROGRAM-OBJECTIVE : LOADING THE VALIDATED RECORDS INTO APPLICANT
+      *                                              DATABASE AND LOAN DATABASE
+      *INPUT FILE                       : SEQUENTIAL FILE
+      *OUTPT                               : DATABASE
+      ******************************************************************
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+      * -----> INPUT FILE WHICH CONTAINS EDUCATIONAL LOAN DETAILS <-----
+                  SELECT INP-PS ASSIGN TO VALRECPS
+                  ORGANIZATION IS SEQUENTIAL
+                  ACCESS IS SEQUENTIAL
+                  FILE STATUS IS WS-FST-INPPS.
+       DATA DIVISION.
+       FILE SECTION.
+      ******************************************************************
+      *------------------>   INPUT FILE DESCRIPTION   <-----------------
+      ******************************************************************
+       FD INP-PS.
+       01 INP-PS-REC.
+          05 INP-APPLICANT-ID                 PIC 9(10).
+          05 FILLER                           PIC X.
+          05 INP-APPLICANT-NAME               PIC X(32).
+          05 FILLER                           PIC X.
+          05 INP-DOOR-NO                      PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-STREET                       PIC X(20).
+          05 FILLER                           PIC X.
+          05 INP-CITY                         PIC X(20).
+          05 FILLER                           PIC X.
+          05 INP-STATE                        PIC X(20).
+          05 FILLER                           PIC X.
+          05 INP-PIN                          PIC 9(06).
+          05 FILLER                           PIC X.
+          05 INP-CELL-PHONE-NO                PIC 9(10).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-ID                      PIC 9(02).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-TYPE                    PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-APPROVED-LOAN-AMOUNT         PIC 9(08).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-APPROVAL-DATE           PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-EXPECTED-LOAN-CLOSURE-DATE   PIC X(10).
+          05 FILLER                           PIC X.
+          05 INP-LOAN-TENURE                  PIC 9(02).
+          05 FILLER                           PIC X.
+          05 INP-FIXED-INTEREST-RATE          PIC 9(2).9.
+          05 FILLER                           PIC X.
+          05 INP-LOAN-INDICATOR               PIC X(5).
+          05 FILLER                           PIC X.
+          05 INP-REPAYMENT-DAY                PIC X(2).
+          05 FILLER                           PIC X.
+          05 INP-TOTAL-REPAYMENT-AMOUNT       PIC 9(10).
+          05 FILLER                           PIC X(42).
+      ******************************************************************
+      * ------------->     WORKING STORAGE SECTION <----------------*
+      ******************************************************************
+       WORKING-STORAGE SECTION.
+      * -------------->  FILE STATUS VARIABLES   <----------------------
+       01 WS-FST-INPPS                        PIC 9(02).
+       01 WS-SQLCODE                          PIC ZZ9-.
+       01 WS-COUNTER                          PIC 99.
+      * -------------> VARIABLES FOR SUB-PGM CALCULATIONS <------------
+       01 WS-FI                     PIC 9(2)V9.
+       01 WS-TOTAL-REPAYMENT-AMOUNT PIC 9(10).
+       01 WS-MRPA                   PIC 9(10).
+       01 WS-TOT                    PIC 9(10).
+      * -----------------
+               EXEC SQL INCLUDE SQLCA END-EXEC.
+               EXEC SQL INCLUDE APDB END-EXEC.
+               EXEC SQL INCLUDE LNDB2 END-EXEC.
+      * ------------> VARIABLES FOR NEXT REAPY DATE CALCULATION <------
+       01 WS-NEXT-REPAY-DATE       PIC X(10).
+       01 WS-YEAR                  PIC 9(4).
+       01 WS-MONTH                 PIC 9(2).
+      * ------------> VARIABLES FOR SQL ERROR HANDLING  <--------------
+       01 WS-ERR.
+          05 WS-ERR-MSG.
+             10 WS-ERR-MSG-LEN       PIC S9(4) COMP VALUE 720.
+             10 WS-ERR-MSG-TEXT      PIC X(80) OCCURS 10 TIMES.
+          05 WS-ERR-LRECL            PIC S9(9) COMP VALUE 72.
+      *****************************************************************
+      * ---------------->    PROCEDURE DIVISION   <-------------------*
+      *****************************************************************
+       PROCEDURE DIVISION.
+       000-MAIN-PARA.
+             PERFORM 1000-INIT-PARA    THRU 1000-INIT-PARA-EXIT.
+             PERFORM 2000-PROCESS-PARA THRU 2000-PROCESS-PARA-EXIT.
+             PERFORM 9000-CLOSE-PARA   THRU 9000-CLOSE-PARA-EXIT.
+             STOP RUN.
+       1000-INIT-PARA.
+             PERFORM 1100-OPEN-PARA THRU 1100-OPEN-PARA-EXIT.
+       1000-INIT-PARA-EXIT.
+             EXIT.
+      *-------------> 1100-OPEN-PARA TO OPEN FILES  <-----------------*
+       1100-OPEN-PARA.
+             OPEN INPUT INP-PS
+             IF WS-FST-INPPS = 00
+                CONTINUE
+             ELSE
+                DISPLAY 'INPUT FILE NOT OPENED-' WS-FST-INPPS
+             END-IF.
+       1100-OPEN-PARA-EXIT.
+             EXIT.
+      *-----> 2000-PROCESS-PARA TO PERFORM READ AND CLOSE PARA <-------*
+       2000-PROCESS-PARA.
+             PERFORM 2100-READ-PARA THRU 2100-READ-PARA-EXIT
+             UNTIL WS-FST-INPPS = 10.
+       2000-PROCESS-PARA-EXIT. EXIT.
+      *------> 2100-READ-PARA TO READ INPUT (SEQUENTIAL) FILE <--------*
+       2100-READ-PARA.
+              READ INP-PS
+              EVALUATE TRUE
+              WHEN WS-FST-INPPS = 00
+                 PERFORM 3000-LOAD-PARA THRU 3000-LOAD-PARA-EXIT
+                 ADD 1 TO WS-COUNTER
+              WHEN WS-FST-INPPS = 10
+                 EVALUATE TRUE
+                 WHEN WS-COUNTER = 00
+                      DISPLAY 'FILE IS EMPTY'
+                 WHEN OTHER
+                      DISPLAY 'ALL RECORDS PROCESSED'
+                      DISPLAY 'NO.OF RECORDS:' WS-COUNTER
+                 END-EVALUATE
+              WHEN OTHER
+                 DISPLAY 'ERROR IN FILE' WS-FST-INPPS
+              END-EVALUATE.
+       2100-READ-PARA-EXIT.
+              EXIT.
+       3000-LOAD-PARA.
+               PERFORM 3500-SQL-APPLDB-PARA THRU
+               3500-SQL-APPLDB-PARA-EXIT.
+               PERFORM 3600-CALC-DATE-PARA  THRU
+               3600-CALC-DATE-PARA-EXIT.
+               PERFORM 4000-LOANDB-PARA THRU 4000-LOANDB-EXIT.
+       3000-LOAD-PARA-EXIT.
+            EXIT.
+      *****************************************************************
+      *--------> LOADING LOAN DETAILS INTO APPLICATION DATABASE <-----*
+      *****************************************************************
+       3500-SQL-APPLDB-PARA.
+                MOVE INP-APPLICANT-ID   TO HV-APPLICANT-ID.
+                MOVE INP-APPLICANT-NAME TO HV-APPLICANT-NAME-TEXT.
+                MOVE LENGTH OF INP-APPLICANT-NAME TO
+                HV-APPLICANT-NAME-LEN.
+                MOVE INP-DOOR-NO       TO HV-DOOR-NO.
+                MOVE INP-STREET        TO HV-STREET.
+                MOVE INP-CITY          TO HV-CITY.
+                MOVE INP-STATE         TO HV-STATE.
+                MOVE INP-PIN           TO HV-PIN.
+                MOVE INP-CELL-PHONE-NO TO HV-CELL-PHONE-NO.
+                EXEC SQL
+                    INSERT INTO APPLICANT_DB (
+                          APPLICANT_ID,
+                          APPLICANT_NAME,
+                          DOOR_NO,
+                          STREET,
+                          CITY,
+                          STATE,
+                          PIN,
+                          CELL_PHONE_NO)
+                    VALUES(
+                          :HV-APPLICANT-ID,
+                          :HV-APPLICANT-NAME,
+                          :HV-DOOR-NO,
+                          :HV-STREET,
+                          :HV-CITY,
+                          :HV-STATE,
+                          :HV-PIN,
+                          :HV-CELL-PHONE-NO)
+                END-EXEC.
+                IF SQLCODE = 0
+                    DISPLAY 'LOADED IN APP_DB:' INP-APPLICANT-ID
+                ELSE
+                   CALL 'DSNTIAR' USING SQLCA, WS-ERR-MSG,WS-ERR-LRECL
+                   DISPLAY WS-ERR-MSG
+                END-IF.
+       3500-SQL-APPLDB-PARA-EXIT.
+             EXIT.
+      ******************************************************************
+      *---------------> CALCULATING NEXT REPAY DUE DATE <---------------
+      ******************************************************************
+       3600-CALC-DATE-PARA.
+           IF(INP-LOAN-APPROVAL-DATE(6:2) < 12) THEN
+             MOVE INP-REPAYMENT-DAY TO WS-NEXT-REPAY-DATE(9:2)
+             MOVE INP-LOAN-APPROVAL-DATE(6:2) TO WS-MONTH
+             COMPUTE WS-MONTH = WS-MONTH + 1
+             MOVE WS-MONTH TO WS-NEXT-REPAY-DATE(6:2)
+             MOVE INP-LOAN-APPROVAL-DATE(1:4) TO WS-NEXT-REPAY-DATE(1:4)
+             MOVE "-" TO WS-NEXT-REPAY-DATE(5:1)
+             MOVE "-" TO WS-NEXT-REPAY-DATE(8:1)
+           ELSE
+             CONTINUE
+           END-IF.
+           IF(INP-LOAN-APPROVAL-DATE(6:2) = 12) THEN
+             MOVE INP-REPAYMENT-DAY TO WS-NEXT-REPAY-DATE(9:2)
+             MOVE '01'  TO WS-NEXT-REPAY-DATE(6:2)
+             MOVE INP-LOAN-APPROVAL-DATE(9:2) TO WS-NEXT-REPAY-DATE(9:2)
+             MOVE INP-LOAN-APPROVAL-DATE(1:4) TO WS-YEAR
+             COMPUTE WS-YEAR = WS-YEAR + 1
+             MOVE WS-YEAR TO WS-NEXT-REPAY-DATE(1:4)
+             MOVE "-" TO WS-NEXT-REPAY-DATE(5:1)
+             MOVE "-" TO WS-NEXT-REPAY-DATE(8:1)
+           ELSE
+             CONTINUE
+           END-IF.
+       3600-CALC-DATE-PARA-EXIT.
+             EXIT.
+       4000-LOANDB-PARA.
+              MOVE INP-FIXED-INTEREST-RATE TO WS-FI.
+              CALL 'EDLNCA03' USING BY REFERENCE INP-LOAN-TENURE
+              WS-FI.
+              COMPUTE WS-TOTAL-REPAYMENT-AMOUNT =
+              INP-APPROVED-LOAN-AMOUNT + ((INP-APPROVED-LOAN-AMOUNT *
+              INP-LOAN-TENURE * WS-FI) / 100).
+              PERFORM 4100-MRP-CAL-PARA THRU 4100-MRP-CAL-PARA-EXIT.
+              PERFORM 4300-SQL-LOANDB-PARA THRU
+              4300-SQL-LOANDB-PARA-EXIT.
+       4000-LOANDB-EXIT.
+             EXIT.
+      *--------> CALCULATING MONTHLY REPAYMENT AMOUNT  <---------------*
+       4100-MRP-CAL-PARA.
+                        MOVE WS-TOTAL-REPAYMENT-AMOUNT TO WS-TOT
+                        COMPUTE WS-MRPA = WS-TOT /
+                                         ( INP-LOAN-TENURE * 12 ).
+       4100-MRP-CAL-PARA-EXIT.
+             EXIT.
+      *****************************************************************
+      *--------> LOADING VALID LOAN DETAILS INTO LOAN DATABASE <-------*
+      *****************************************************************
+       4300-SQL-LOANDB-PARA.
+                PERFORM 4400-MOVE-INPTHV-PARA THRU 4400-MOVE-EXIT
+                EXEC SQL
+                    INSERT INTO LOAN_DB2 (
+                          L_APPLICANT_ID,
+                          LOAN_ID,
+                          LOAN_TYPE,
+                          APPROVED_LOAN_AMOUNT,
+                          LOAN_APPROVAL_DATE,
+                          EXPECTED_LOAN_CLOSURE_DATE,
+                          LOAN_TENURE,
+                          FIXED_INTEREST_RATE,
+                          LOAN_INDICATOR,
+                          REPAYMENT_DAY,
+                          TOTAL_REPAYMENT_AMOUNT,
+                          MONTHLY_REPAY_AMOUNT,
+                          NEXT_REPAYMENT_DUE_DATE,
+                          BALANCE_AMOUNT)
+                    VALUES(
+                          :HV-L-APPLICANT-ID,
+                          :HV-LOAN-ID,
+                          :HV-LOAN-TYPE,
+                          :HV-APPROVED-LOAN-AMOUNT,
+                          :HV-LOAN-APPROVAL-DATE,
+                          :HV-EXPECTED-LOAN-CLOSURE-DATE,
+                          :HV-LOAN-TENURE,
+                          :HV-FIXED-INTEREST-RATE,
+                          :HV-LOAN-INDICATOR,
+                          :HV-REPAYMENT-DAY,
+                          :HV-TOTAL-REPAYMENT-AMOUNT,
+                          :HV-MONTHLY-REPAY-AMOUNT,
+                          :HV-NEXT-REPAYMENT-DUE-DATE,
+                          :HV-BALANCE-AMOUNT)
+                END-EXEC.
+                IF SQLCODE = 0
+                    DISPLAY 'LOADED IN LOAN DB: 'INP-APPLICANT-ID
+                ELSE
+                   CALL 'DSNTIAR' USING SQLCA, WS-ERR-MSG,WS-ERR-LRECL
+                   DISPLAY WS-ERR-MSG
+                END-IF.
+       4300-SQL-LOANDB-PARA-EXIT.
+              EXIT.
+       4400-MOVE-INPTHV-PARA.
+            MOVE INP-APPLICANT-ID TO HV-L-APPLICANT-ID.
+            MOVE INP-LOAN-ID      TO HV-LOAN-ID.
+            MOVE INP-LOAN-TYPE    TO HV-LOAN-TYPE.
+            MOVE INP-APPROVED-LOAN-AMOUNT  TO HV-APPROVED-LOAN-AMOUNT.
+            MOVE INP-LOAN-APPROVAL-DATE    TO HV-LOAN-APPROVAL-DATE.
+            MOVE INP-EXPECTED-LOAN-CLOSURE-DATE TO
+                 HV-EXPECTED-LOAN-CLOSURE-DATE.
+            MOVE INP-LOAN-TENURE           TO HV-LOAN-TENURE.
+            MOVE WS-FI                     TO HV-FIXED-INTEREST-RATE.
+            MOVE INP-LOAN-INDICATOR        TO HV-LOAN-INDICATOR.
+            MOVE INP-REPAYMENT-DAY         TO HV-REPAYMENT-DAY.
+            MOVE WS-TOTAL-REPAYMENT-AMOUNT TO
+                 HV-TOTAL-REPAYMENT-AMOUNT.
+            MOVE WS-MRPA TO HV-MONTHLY-REPAY-AMOUNT.
+            MOVE WS-NEXT-REPAY-DATE TO
+                 HV-NEXT-REPAYMENT-DUE-DATE.
+            MOVE WS-TOTAL-REPAYMENT-AMOUNT TO
+                 HV-BALANCE-AMOUNT.
+       4400-MOVE-EXIT.
+              EXIT.
+       9000-CLOSE-PARA.
+             CLOSE INP-PS.
+       9000-CLOSE-PARA-EXIT.
+              EXIT.
+
