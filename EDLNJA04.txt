@@ -1,0 +1,39 @@
+//TECN180M JOB '2317442,MARUTHI',MSGLEVEL=(1,1),
+//           MSGCLASS=A,CLASS=A,PRTY=15,NOTIFY=&SYSUID
+//JOBLIB   DD DISP=SHR,DSN=DSN810.SDSNEXIT
+//         DD DISP=SHR,DSN=DSN810.SDSNLOAD
+//         DD DISP=SHR,DSN=CEE.SCEERUN
+//**********************************************************************
+//*  ----------------> KSDS FILE CREATION  <------------------------
+//**********************************************************************
+//STEP1    EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=*
+//SYSOUT   DD SYSOUT=*
+//SYSIN    DD *
+  DELETE TECN180.EDU.MASTER.ACTIVE.KSDS
+  IF LAST CC > 0 THEN SET MAXCC = 0
+  DEFINE CLUSTER(NAME(TECN180.EDU.MASTER.ACTIVE.KSDS) -
+  INDEXED                                             -
+  KEYS(10 0)                                          -
+  RECORDSIZE(80 80)                                   -
+  VOLUMES(ZAPRD8)                                     -
+  TRACKS(5 5)                                         -
+  FREESPACE(10 10)                                    -
+  CISZ(4096)                                          -
+  REUSE)
+/*
+//**********************************************************************
+//*------------> EXECUTES COBOL DB2 PROGRAM (EDLNCA04)  <---------------
+//**********************************************************************
+//EDLNCA04 EXEC PGM=IKJEFT01,DYNAMNBR=20,COND=(4,LT)
+//SYSTSPRT DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*
+//SYSOUT   DD SYSOUT=*
+//MALNKSDS DD DSN=TECN180.EDU.MASTER.ACTIVE.KSDS,DISP=SHR
+//SYSIN    DD DUMMY
+//SYSTSIN  DD *
+  DSN SYSTEM(DB9G)
+  RUN PROGRAM(EDLNCA04) PLAN(TECN180F) LIB('TECN180.DB2.LOADLIB')
+  END
+/*
+

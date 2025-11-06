@@ -1,0 +1,15 @@
+//TECN180M JOB '2317442,MARUTHI',MSGLEVEL=(1,1),
+//          MSGCLASS=A,CLASS=A,PRTY=15,NOTIFY=&SYSUID
+//**********************************************************************
+//* ---------------->   GDG BACKUP FOR INPUT FILE    <------------------
+//**********************************************************************
+//STEP1    EXEC PGM=IEBGENER
+//SYSUT1   DD DSN=TECN180.EDU.APLICANT.DETAILS.PS,DISP=SHR
+//SYSUT2   DD DSN=TECN180.EDU.BACKUP.GDG(+1),
+//            DISP=(NEW,CATLG,DELETE),
+//            SPACE=(TRK,(1,1)),UNIT=SYSDA,VOL=SER=ZAPRD8,
+//            DCB=(RECFM=FB,LRECL=250)
+//SYSIN    DD DUMMY
+//SYSPRINT DD SYSOUT=*
+//SYSOUT   DD SYSOUT=*
+
