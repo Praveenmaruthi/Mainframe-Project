@@ -1,0 +1,52 @@
+//TECN180M JOB '2317442,MARUTHI',MSGLEVEL=(1,1),
+//          MSGCLASS=A,CLASS=A,PRTY=15,NOTIFY=&SYSUID
+//JOBLIB   DD DSN=TECN180.COBOL.LOADLIB,DISP=SHR     --> LOADLIB NAME
+//*********************************************************************
+//*         PREDELETE STEP
+//*********************************************************************
+//STEPDEL  EXEC PGM=IEFBR14
+//DD1      DD DSN=TECN180.EDU.ERROR.FILE,
+//            DISP=(MOD,DELETE,DELETE),
+//            SPACE=(TRK,(0))
+//DD2      DD DSN=TECN180.EDU.VALIDREC.FILE,
+//            DISP=(MOD,DELETE,DELETE),
+//            SPACE=(TRK,(0))
+//DD3      DD DSN=TECN180.EDU.SHORTERM.PS,
+//            DISP=(MOD,DELETE,DELETE),SPACE=(TRK,(0))
+//DD4      DD DSN=TECN180.EDU.LONGTERM.PS,
+//            DISP=(MOD,DELETE,DELETE),SPACE=(TRK,(0))
+//**********************************************************************
+//*-------------->  EXECUTING THE COBAL PROGRAM (EDLNCA01) <-----------*
+//**********************************************************************
+//EDLNCA01 EXEC PGM=EDLNCA01                     ---> MEMBER NAME
+//LOANDET  DD DSN=TECN180.EDU.APLICANT.DETAILS.PS,DISP=SHR
+//ERRORPS  DD DSN=TECN180.EDU.ERROR.FILE,
+//            DISP=(NEW,CATLG,DELETE),
+//            SPACE=(TRK,(2,2)),VOL=SER=ZAPRD8,
+//            DCB=(RECFM=FB,LRECL=250)
+//VALRECPS DD DSN=TECN180.EDU.VALIDREC.FILE,
+//            DISP=(NEW,CATLG,DELETE),
+//            SPACE=(TRK,(2,2)),VOL=SER=ZAPRD8,
+//            DCB=(RECFM=FB,LRECL=250)
+//SYSIN    DD DUMMY
+//**********************************************************************
+//* SPLITING THE VALID FILE INTO TWO FILES (SHORT & LONG TERM FILES)   *
+//**********************************************************************
+//SPLIT    EXEC PGM=SORT
+//SORTIN   DD DSN=TECN180.EDU.VALIDREC.FILE,DISP=SHR
+//SORTOF01 DD DSN=TECN180.EDU.SHORTERM.PS,
+//            DISP=(NEW,CATLG,DELETE),
+//            SPACE=(TRK,(2,2)),UNIT=SYSDA,VOL=SER=ZAPRD8,
+//            DCB=(RECFM=FB,LRECL=250)
+//SORTOF02 DD DSN=TECN180.EDU.LONGTERM.PS,
+//            DISP=(NEW,CATLG,DELETE),
+//            SPACE=(TRK,(2,2)),UNIT=SYSDA,VOL=SER=ZAPRD8,
+//            DCB=(RECFM=FB,LRECL=250)
+//SYSOUT   DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD *
+  SORT FIELDS=COPY
+  OUTFIL FILES=01,INCLUDE=(182,2,ZD,LE,5)
+  OUTFIL FILES=02,INCLUDE=(182,2,ZD,GT,5)
+/*
+
